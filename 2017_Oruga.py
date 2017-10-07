@@ -8,7 +8,7 @@ from time import sleep
 SCREEN_SIZE = Rect(0, 0, 1000, 700)
 screen = pygame.display.set_mode((1000, 700))
 
-class PlayerSprite(pygame.sprite.Sprite):
+class PlayerSprite(pygame.sprite.Sprite):   #playerClass
     speed = 25
     def __init__(self):
         pygame.sprite.Sprite.__init__(self, self.containers)
@@ -20,6 +20,8 @@ class PlayerSprite(pygame.sprite.Sprite):
     def update(self):
         pygame.event.pump()
         pressed_key = pygame.key.get_pressed()
+
+        #(W:↑, A:←, S:↓, D:→)
         if pressed_key[K_w]:
             self.rect.move_ip(0,-self.speed)
         elif pressed_key[K_s]:
@@ -30,14 +32,15 @@ class PlayerSprite(pygame.sprite.Sprite):
             self.rect.move_ip(self.speed, 0)
         self.rect = self.rect.clamp(SCREEN_SIZE)
 
-class EnemySprite(pygame.sprite.Sprite):
+class EnemySprite(pygame.sprite.Sprite):    #EnemyClass
     speed = 20 #可変を予定
 
     def __init__(self):
         pygame.sprite.Sprite.__init__(self, self.containers)
 
+    #Enemy生成
     def visit(self):
-        self.pattern = random.randint(1,4)
+        self.pattern = random.randint(1,4)  #EnemyPattern
         if self.pattern == 1:
             self.image = pygame.image.load("./assets/baeru1.png")
             self.rect = self.image.get_rect()
@@ -72,8 +75,8 @@ class EnemySprite(pygame.sprite.Sprite):
 class Game:
 
     def __init__(self):
-        self.start_time=time.time()
         pygame.init()
+
         self.sys_font = pygame.font.SysFont(None, 60)
         self.go_text = self.sys_font.render("Game Over...", False, (0,0,0))
         pygame.display.set_caption("💃「止まるんじゃねぇぞ.....」")
@@ -81,12 +84,14 @@ class Game:
         pygame.mixer.music.play(-1)
         self.game_over_img = pygame.image.load("./assets/gameover.png").convert_alpha()
         self.dontstop = pygame.mixer.Sound("./assets/gameover_se.ogg")
+
         self.rect_og_img = self.game_over_img.get_rect()
         self.flag = True
         self.all_sprite = pygame.sprite.RenderUpdates()
         self.oruga = pygame.sprite.Group()
         self.baeru = pygame.sprite.Group()
         self.score = 0
+
         PlayerSprite.containers = self.all_sprite, self.oruga
         EnemySprite.containers = self.all_sprite, self.baeru
         self.player = PlayerSprite()
@@ -97,21 +102,23 @@ class Game:
         FPS_CLOCK = pygame.time.Clock()
         screen = pygame.display.set_mode(SCREEN_SIZE.size)
         while(True):
-            if self.flag == True:
+            if self.flag == True: #playing
                 FPS_CLOCK.tick(60)
                 screen.fill((0,0,255))
-                self.update()
                 self.all_sprite.draw(screen)
                 self.score = pygame.time.get_ticks()
                 self.score_text = self.sys_font.render("Score:" + str(self.score), False, (255,255,255))
-                screen.blit(self.score_text, (20,100))
+                screen.blit(self.score_text, (20,50))
+                self.update()
                 pygame.display.update()
                 self.key_handler()
-            else:
+            else:   #gameover
                 FPS_CLOCK.tick(60)
                 screen.fill((0,0,0))
                 screen.blit(self.game_over_img, self.rect_og_img)
                 screen.blit(self.go_text, (20,50))
+                self.score_text = self.sys_font.render("Score:" + str(self.score), False, (0,0,0))
+                screen.blit(self.score_text, (20,100))
                 pressed_key = pygame.key.get_pressed()
                 pygame.display.update()
                 self.key_handler()
@@ -119,15 +126,13 @@ class Game:
     def hit_check(self):
         player_hited = pygame.sprite.groupcollide(self.baeru, self.oruga, False, True)
         for enemy in player_hited.keys():
+            #GameOver
             self.flag = False
             pygame.mixer.music.stop()
             pygame.mixer.music.load("./assets/gameover_bgm.ogg")
             self.dontstop.play()
-            sleep(1)
+            sleep(1)    #音声被り防止
             pygame.mixer.music.play()
-            #GameOver
-            #pygame.quit()
-            #sys.exit()
 
     def update(self):
         if not random.randrange(15):
@@ -144,7 +149,6 @@ class Game:
                 if event.key == K_ESCAPE:
                     pygame.quit()
                     sys.exit()
-
 
 if __name__ == '__main__':
     Game()
